@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # Custom entrypoint for Grafana on Render
 # Fixes permissions on the mounted disk before starting Grafana
 
@@ -11,4 +11,5 @@ chown -R grafana:root /var/data/grafana
 chmod -R 775 /var/data/grafana
 
 # Switch to grafana user and run the original entrypoint
-exec gosu grafana /run.sh "$@"
+# Using su-exec (Alpine's lightweight alternative to gosu)
+exec su-exec grafana /run.sh "$@"
