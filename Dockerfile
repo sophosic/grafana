@@ -20,6 +20,7 @@ ENV GF_USERS_ALLOW_SIGN_UP=false
 # Render mounts disks as root, but Grafana runs as uid 472
 # The entrypoint runs as root, fixes permissions, then switches to grafana
 USER root
+RUN apk add --no-cache su-exec
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
