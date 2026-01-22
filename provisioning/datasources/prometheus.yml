@@ -1,0 +1,18 @@
+# Prometheus Data Source - Auto-provisioned
+# Connects to Prometheus via Render's private network
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    # Internal hostname on Render's private network (same region: ohio)
+    url: http://sophosic-prometheus:9090
+    isDefault: true
+    editable: false
+    jsonData:
+      httpMethod: POST
+      manageAlerts: true
+      prometheusType: Prometheus
+      prometheusVersion: 2.52.0
+      timeInterval: 15s

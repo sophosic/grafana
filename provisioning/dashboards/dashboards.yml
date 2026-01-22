@@ -1,0 +1,14 @@
+# Dashboard Provisioning Configuration
+apiVersion: 1
+
+providers:
+  - name: Sophosic Dashboards
+    orgId: 1
+    folder: Sophosic
+    folderUid: sophosic
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards
