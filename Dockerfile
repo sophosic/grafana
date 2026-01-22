@@ -16,13 +16,15 @@ ENV GF_SECURITY_ADMIN_USER=admin
 ENV GF_AUTH_ANONYMOUS_ENABLED=false
 ENV GF_USERS_ALLOW_SIGN_UP=false
 
-# Fix permissions for Render's disk mount
+# Custom entrypoint to fix permissions at runtime
 # Render mounts disks as root, but Grafana runs as uid 472
+# The entrypoint runs as root, fixes permissions, then switches to grafana
 USER root
-RUN mkdir -p /var/data/grafana/plugins && \
-    chown -R grafana:root /var/data && \
-    chmod -R 775 /var/data
-USER grafana
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 # Expose Grafana port
 EXPOSE 3000
+
+# Use custom entrypoint (runs as root to fix disk permissions, then drops to grafana)
+ENTRYPOINT ["/entrypoint.sh"]
