@@ -1,0 +1,12 @@
+# Loki Data Source - Auto-provisioned
+# Connects to Loki via Render's private network
+apiVersion: 1
+
+datasources:
+  - name: Loki
+    type: loki
+    access: proxy
+    # Internal hostname on Render's private network (same region: ohio)
+    url: http://sophosic-loki:3100
+    isDefault: false
+    editable: false
