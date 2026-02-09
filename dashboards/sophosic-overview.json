@@ -27,7 +27,7 @@
       "gridPos": { "h": 6, "w": 6, "x": 0, "y": 1 },
       "id": 2,
       "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" },
-      "targets": [{ "expr": "sum(rate(http_requests_total[5m]))", "refId": "A" }],
+      "targets": [{ "expr": "sum(rate(http_requests_total[5m])) or on() vector(0)", "refId": "A" }],
       "title": "Request Rate",
       "type": "stat"
     },
@@ -44,7 +44,7 @@
       "gridPos": { "h": 6, "w": 6, "x": 6, "y": 1 },
       "id": 3,
       "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" },
-      "targets": [{ "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le))", "refId": "A" }],
+      "targets": [{ "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) or on() vector(0)", "refId": "A" }],
       "title": "P95 Latency",
       "type": "stat"
     },
@@ -61,7 +61,7 @@
       "gridPos": { "h": 6, "w": 6, "x": 12, "y": 1 },
       "id": 4,
       "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" },
-      "targets": [{ "expr": "sum(http_requests_in_progress)", "refId": "A" }],
+      "targets": [{ "expr": "sum(http_requests_in_progress) or on() vector(0)", "refId": "A" }],
       "title": "In-Progress Requests",
       "type": "stat"
     },
@@ -78,7 +78,7 @@
       "gridPos": { "h": 6, "w": 6, "x": 18, "y": 1 },
       "id": 5,
       "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" },
-      "targets": [{ "expr": "sum(rate(http_requests_total{status=~\"5..\"}[5m])) / sum(rate(http_requests_total[5m]))", "refId": "A" }],
+      "targets": [{ "expr": "(sum(rate(http_requests_total{status_code=~\"5..\"}[5m])) or on() vector(0)) / (sum(rate(http_requests_total[5m])) > 0 or on() vector(1))", "refId": "A" }],
       "title": "Error Rate (5xx)",
       "type": "stat"
     },
@@ -106,347 +106,55 @@
       "title": "Request Latency Percentiles",
       "type": "timeseries"
     },
-    {
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 15 },
-      "id": 10,
-      "title": "SOP Execution",
-      "type": "row"
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
-      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "mappings": [], "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }, "unit": "short" } },
-      "gridPos": { "h": 5, "w": 4, "x": 0, "y": 16 },
-      "id": 11,
-      "options": { "colorMode": "value", "graphMode": "none", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" },
-      "targets": [{ "expr": "sop_runs_in_progress", "refId": "A" }],
-      "title": "SOPs Running",
-      "type": "stat"
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
-      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "mappings": [], "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }, "unit": "short" } },
-      "gridPos": { "h": 5, "w": 4, "x": 4, "y": 16 },
-      "id": 12,
-      "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" },
-      "targets": [{ "expr": "increase(sop_runs_completed_total[24h])", "refId": "A" }],
-      "title": "SOPs Completed (24h)",
-      "type": "stat"
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
-      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "mappings": [], "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 1 }] }, "unit": "short" } },
-      "gridPos": { "h": 5, "w": 4, "x": 8, "y": 16 },
-      "id": 13,
-      "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" },
-      "targets": [{ "expr": "increase(sop_runs_execution_failed_total[24h])", "refId": "A" }],
-      "title": "SOP Failures (24h)",
-      "type": "stat"
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
-      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "axisBorderShow": false, "axisCenteredZero": false, "axisColorMode": "text", "axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line", "fillOpacity": 20, "gradientMode": "none", "hideFrom": { "legend": false, "tooltip": false, "viz": false }, "lineInterpolation": "smooth", "lineWidth": 2, "pointSize": 5, "scaleDistribution": { "type": "linear" }, "showPoints": "never", "spanNulls": false, "stacking": { "group": "A", "mode": "none" }, "thresholdsStyle": { "mode": "off" } }, "mappings": [], "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }, "unit": "s" } },
-      "gridPos": { "h": 5, "w": 12, "x": 12, "y": 16 },
-      "id": 14,
-      "options": { "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": false }, "tooltip": { "mode": "single", "sort": "none" } },
-      "targets": [{ "expr": "histogram_quantile(0.95, sum(rate(sop_run_duration_seconds_bucket[5m])) by (le))", "legendFormat": "P95 Duration", "refId": "A" }],
-      "title": "SOP Execution Duration (P95)",
-      "type": "timeseries"
-    },
-    {
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 21 },
-      "id": 20,
-      "title": "Streaming & MCP",
-      "type": "row"
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
-      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "mappings": [], "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }, "unit": "short" } },
-      "gridPos": { "h": 5, "w": 4, "x": 0, "y": 22 },
-      "id": 21,
-      "options": { "colorMode": "value", "graphMode": "none", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" },
-      "targets": [{ "expr": "stream_manager_active_count", "refId": "A" }],
-      "title": "Active Streams",
-      "type": "stat"
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
-      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "mappings": [], "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }, "unit": "short" } },
-      "gridPos": { "h": 5, "w": 4, "x": 4, "y": 22 },
-      "id": 22,
-      "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" },
-      "targets": [{ "expr": "rate(stream_chunks_processed_total[5m])", "refId": "A" }],
-      "title": "Chunks/sec",
-      "type": "stat"
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
-      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "mappings": [], "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }, "unit": "short" } },
-      "gridPos": { "h": 5, "w": 4, "x": 8, "y": 22 },
-      "id": 23,
-      "options": { "colorMode": "value", "graphMode": "none", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" },
-      "targets": [{ "expr": "mcp_active_connections", "refId": "A" }],
-      "title": "MCP Connections",
-      "type": "stat"
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
-      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "axisBorderShow": false, "axisCenteredZero": false, "axisColorMode": "text", "axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line", "fillOpacity": 20, "gradientMode": "none", "hideFrom": { "legend": false, "tooltip": false, "viz": false }, "lineInterpolation": "smooth", "lineWidth": 2, "pointSize": 5, "scaleDistribution": { "type": "linear" }, "showPoints": "never", "spanNulls": false, "stacking": { "group": "A", "mode": "none" }, "thresholdsStyle": { "mode": "off" } }, "mappings": [], "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }, "unit": "s" } },
-      "gridPos": { "h": 5, "w": 12, "x": 12, "y": 22 },
-      "id": 24,
-      "options": { "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
-      "targets": [
-        { "expr": "histogram_quantile(0.95, sum(rate(mcp_tool_call_latency_seconds_bucket[5m])) by (le))", "legendFormat": "Tool Call P95", "refId": "A" },
-        { "expr": "histogram_quantile(0.95, sum(rate(mcp_list_tools_latency_seconds_bucket[5m])) by (le))", "legendFormat": "List Tools P95", "refId": "B" }
-      ],
-      "title": "MCP Latency",
-      "type": "timeseries"
-    },
-    {
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 27 },
-      "id": 30,
-      "title": "System Resources",
-      "type": "row"
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
-      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "axisBorderShow": false, "axisCenteredZero": false, "axisColorMode": "text", "axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line", "fillOpacity": 20, "gradientMode": "none", "hideFrom": { "legend": false, "tooltip": false, "viz": false }, "lineInterpolation": "smooth", "lineWidth": 2, "pointSize": 5, "scaleDistribution": { "type": "linear" }, "showPoints": "never", "spanNulls": false, "stacking": { "group": "A", "mode": "none" }, "thresholdsStyle": { "mode": "off" } }, "mappings": [], "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }, "unit": "bytes" } },
-      "gridPos": { "h": 6, "w": 12, "x": 0, "y": 28 },
-      "id": 31,
-      "options": { "legend": { "calcs": ["lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
-      "targets": [
-        { "expr": "process_resident_memory_bytes{job=\"sophosic-api\"}", "legendFormat": "RSS Memory", "refId": "A" },
-        { "expr": "process_virtual_memory_bytes{job=\"sophosic-api\"}", "legendFormat": "Virtual Memory", "refId": "B" }
-      ],
-      "title": "Memory Usage",
-      "type": "timeseries"
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
-      "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "axisBorderShow": false, "axisCenteredZero": false, "axisColorMode": "text", "axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line", "fillOpacity": 20, "gradientMode": "none", "hideFrom": { "legend": false, "tooltip": false, "viz": false }, "lineInterpolation": "smooth", "lineWidth": 2, "pointSize": 5, "scaleDistribution": { "type": "linear" }, "showPoints": "never", "spanNulls": false, "stacking": { "group": "A", "mode": "none" }, "thresholdsStyle": { "mode": "off" } }, "mappings": [], "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }, "unit": "short" } },
-      "gridPos": { "h": 6, "w": 12, "x": 12, "y": 28 },
-      "id": 32,
-      "options": { "legend": { "calcs": ["lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
-      "targets": [
-        { "expr": "rate(process_cpu_seconds_total{job=\"sophosic-api\"}[5m])", "legendFormat": "CPU Usage", "refId": "A" }
-      ],
-      "title": "CPU Usage",
-      "type": "timeseries"
-    },
-    {
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 34 },
-      "id": 40,
-      "title": "Embedding Pipeline",
-      "type": "row"
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "thresholds" },
-          "decimals": 1,
-          "mappings": [],
-          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 0.1 }] },
-          "unit": "short"
-        }
-      },
-      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 35 },
-      "id": 41,
-      "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" },
-      "targets": [{ "expr": "sum(rate(sophosic_embedding_tasks_total{status=\"completed\"}[5m])) * 60", "refId": "A" }],
-      "title": "Embedding Tasks/min",
-      "type": "stat"
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "thresholds" },
-          "mappings": [],
-          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 2 }, { "color": "red", "value": 5 }] },
-          "unit": "s"
-        }
-      },
-      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 35 },
-      "id": 42,
-      "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" },
-      "targets": [{ "expr": "histogram_quantile(0.95, sum by (le) (rate(sophosic_embedding_task_duration_seconds_bucket[5m])))", "refId": "A" }],
-      "title": "Embedding Latency P95",
-      "type": "stat"
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "thresholds" },
-          "mappings": [],
-          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 1 }, { "color": "red", "value": 5 }] },
-          "unit": "short"
-        }
-      },
-      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 35 },
-      "id": 43,
-      "options": { "colorMode": "background", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" },
-      "targets": [{ "expr": "sum(increase(sophosic_embedding_tasks_total{status=\"failed\"}[24h])) or vector(0)", "refId": "A" }],
-      "title": "Task Failures (24h)",
-      "type": "stat"
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "thresholds" },
-          "mappings": [],
-          "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "yellow", "value": 50 }, { "color": "green", "value": 80 }] },
-          "unit": "percent"
-        }
-      },
-      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 35 },
-      "id": 44,
-      "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" },
-      "targets": [{ "expr": "sum(rate(sophosic_embedding_cache_operations_total{operation=\"hit\"}[5m])) / (sum(rate(sophosic_embedding_cache_operations_total{operation=~\"hit|miss\"}[5m])) > 0) * 100 or vector(0)", "refId": "A" }],
-      "title": "Cache Hit Rate",
-      "type": "stat"
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": { "axisBorderShow": false, "axisCenteredZero": false, "axisColorMode": "text", "axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line", "fillOpacity": 15, "gradientMode": "none", "hideFrom": { "legend": false, "tooltip": false, "viz": false }, "lineInterpolation": "smooth", "lineWidth": 2, "pointSize": 5, "scaleDistribution": { "type": "linear" }, "showPoints": "never", "spanNulls": false, "stacking": { "group": "A", "mode": "none" }, "thresholdsStyle": { "mode": "off" } },
-          "mappings": [],
-          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] },
-          "unit": "short"
-        },
-        "overrides": [
-          {
-            "matcher": { "id": "byName", "options": "Completed" },
-            "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }]
-          },
-          {
-            "matcher": { "id": "byName", "options": "Failed" },
-            "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }]
-          },
-          {
-            "matcher": { "id": "byName", "options": "Skipped" },
-            "properties": [{ "id": "color", "value": { "fixedColor": "yellow", "mode": "fixed" } }]
-          }
-        ]
-      },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 41 },
-      "id": 45,
-      "options": { "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
-      "targets": [
-        { "expr": "sum(rate(sophosic_embedding_tasks_total{status=\"completed\"}[5m])) * 60", "legendFormat": "Completed", "refId": "A" },
-        { "expr": "sum(rate(sophosic_embedding_tasks_total{status=\"failed\"}[5m])) * 60", "legendFormat": "Failed", "refId": "B" },
-        { "expr": "sum(rate(sophosic_embedding_tasks_total{status=\"skipped\"}[5m])) * 60", "legendFormat": "Skipped", "refId": "C" }
-      ],
-      "title": "Embedding Task Throughput",
-      "type": "timeseries"
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "palette-classic" },
-          "custom": { "axisBorderShow": false, "axisCenteredZero": false, "axisColorMode": "text", "axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line", "fillOpacity": 20, "gradientMode": "none", "hideFrom": { "legend": false, "tooltip": false, "viz": false }, "lineInterpolation": "smooth", "lineWidth": 2, "pointSize": 5, "scaleDistribution": { "type": "linear" }, "showPoints": "never", "spanNulls": false, "stacking": { "group": "A", "mode": "none" }, "thresholdsStyle": { "mode": "off" } },
-          "mappings": [],
-          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] },
-          "unit": "s"
-        },
-        "overrides": [
-          {
-            "matcher": { "id": "byName", "options": "P50" },
-            "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }]
-          },
-          {
-            "matcher": { "id": "byName", "options": "P95" },
-            "properties": [{ "id": "color", "value": { "fixedColor": "yellow", "mode": "fixed" } }]
-          },
-          {
-            "matcher": { "id": "byName", "options": "P99" },
-            "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }]
-          }
-        ]
-      },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 41 },
-      "id": 46,
-      "options": { "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } },
-      "targets": [
-        { "expr": "histogram_quantile(0.50, sum by (le) (rate(sophosic_embedding_task_duration_seconds_bucket[5m])))", "legendFormat": "P50", "refId": "A" },
-        { "expr": "histogram_quantile(0.95, sum by (le) (rate(sophosic_embedding_task_duration_seconds_bucket[5m])))", "legendFormat": "P95", "refId": "B" },
-        { "expr": "histogram_quantile(0.99, sum by (le) (rate(sophosic_embedding_task_duration_seconds_bucket[5m])))", "legendFormat": "P99", "refId": "C" }
-      ],
-      "title": "Embedding Latency Percentiles",
-      "type": "timeseries"
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "thresholds" },
-          "mappings": [],
-          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] },
-          "unit": "short"
-        }
-      },
-      "gridPos": { "h": 6, "w": 6, "x": 0, "y": 49 },
-      "id": 47,
-      "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" },
-      "targets": [{ "expr": "sum(increase(sophosic_embedding_discovery_sessions_total{action=\"discovered\"}[1h]))", "refId": "A" }],
-      "title": "Stale Sessions Discovered",
-      "type": "stat"
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "thresholds" },
-          "mappings": [],
-          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] },
-          "unit": "short"
-        }
-      },
-      "gridPos": { "h": 6, "w": 6, "x": 6, "y": 49 },
-      "id": 48,
-      "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" },
-      "targets": [{ "expr": "sum(increase(sophosic_embedding_discovery_sessions_total{action=\"enqueued\"}[1h]))", "refId": "A" }],
-      "title": "Stale Sessions Enqueued",
-      "type": "stat"
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "thresholds" },
-          "mappings": [],
-          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] },
-          "unit": "short"
-        }
-      },
-      "gridPos": { "h": 6, "w": 6, "x": 12, "y": 49 },
-      "id": 49,
-      "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" },
-      "targets": [{ "expr": "sum(increase(sophosic_embedding_chunks_total[24h]))", "refId": "A" }],
-      "title": "Chunks Embedded (24h)",
-      "type": "stat"
-    },
-    {
-      "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" },
-      "fieldConfig": {
-        "defaults": {
-          "color": { "mode": "thresholds" },
-          "mappings": [],
-          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] },
-          "unit": "short"
-        }
-      },
-      "gridPos": { "h": 6, "w": 6, "x": 18, "y": 49 },
-      "id": 50,
-      "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" },
-      "targets": [{ "expr": "sum(increase(sophosic_embedding_messages_total[24h]))", "refId": "A" }],
-      "title": "Messages Embedded (24h)",
-      "type": "stat"
-    }
+    { "gridPos": { "h": 1, "w": 24, "x": 0, "y": 15 }, "id": 10, "title": "SOP Execution", "type": "row" },
+    { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "mappings": [], "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }, "unit": "short" } }, "gridPos": { "h": 5, "w": 4, "x": 0, "y": 16 }, "id": 11, "options": { "colorMode": "value", "graphMode": "none", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" }, "targets": [{ "expr": "sop_runs_in_progress or on() vector(0)", "refId": "A" }], "title": "SOPs Running", "type": "stat" },
+    { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "mappings": [], "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }, "unit": "short" } }, "gridPos": { "h": 5, "w": 4, "x": 4, "y": 16 }, "id": 12, "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" }, "targets": [{ "expr": "increase(sop_runs_completed_total[24h]) or on() vector(0)", "refId": "A" }], "title": "SOPs Completed (24h)", "type": "stat" },
+    { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "mappings": [], "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 1 }] }, "unit": "short" } }, "gridPos": { "h": 5, "w": 4, "x": 8, "y": 16 }, "id": 13, "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" }, "targets": [{ "expr": "increase(sop_runs_execution_failed_total[24h]) or on() vector(0)", "refId": "A" }], "title": "SOP Failures (24h)", "type": "stat" },
+    { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "axisBorderShow": false, "axisCenteredZero": false, "axisColorMode": "text", "axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line", "fillOpacity": 20, "gradientMode": "none", "hideFrom": { "legend": false, "tooltip": false, "viz": false }, "lineInterpolation": "smooth", "lineWidth": 2, "pointSize": 5, "scaleDistribution": { "type": "linear" }, "showPoints": "never", "spanNulls": false, "stacking": { "group": "A", "mode": "none" }, "thresholdsStyle": { "mode": "off" } }, "mappings": [], "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }, "unit": "s" } }, "gridPos": { "h": 5, "w": 12, "x": 12, "y": 16 }, "id": 14, "options": { "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": false }, "tooltip": { "mode": "single", "sort": "none" } }, "targets": [{ "expr": "histogram_quantile(0.95, sum(rate(sop_run_duration_seconds_bucket[5m])) by (le))", "legendFormat": "P95 Duration", "refId": "A" }], "title": "SOP Execution Duration (P95)", "type": "timeseries" },
+    { "gridPos": { "h": 1, "w": 24, "x": 0, "y": 21 }, "id": 20, "title": "Streaming & MCP", "type": "row" },
+    { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "mappings": [], "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }, "unit": "short" } }, "gridPos": { "h": 5, "w": 4, "x": 0, "y": 22 }, "id": 21, "options": { "colorMode": "value", "graphMode": "none", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" }, "targets": [{ "expr": "stream_manager_active_count or on() vector(0)", "refId": "A" }], "title": "Active Streams", "type": "stat" },
+    { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "mappings": [], "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }, "unit": "short" } }, "gridPos": { "h": 5, "w": 4, "x": 4, "y": 22 }, "id": 22, "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" }, "targets": [{ "expr": "rate(stream_chunks_processed_total[5m]) or on() vector(0)", "refId": "A" }], "title": "Chunks/sec", "type": "stat" },
+    { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "mappings": [], "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }, "unit": "short" } }, "gridPos": { "h": 5, "w": 4, "x": 8, "y": 22 }, "id": 23, "options": { "colorMode": "value", "graphMode": "none", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" }, "targets": [{ "expr": "mcp_active_connections or on() vector(0)", "refId": "A" }], "title": "MCP Connections", "type": "stat" },
+    { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "axisBorderShow": false, "axisCenteredZero": false, "axisColorMode": "text", "axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line", "fillOpacity": 20, "gradientMode": "none", "hideFrom": { "legend": false, "tooltip": false, "viz": false }, "lineInterpolation": "smooth", "lineWidth": 2, "pointSize": 5, "scaleDistribution": { "type": "linear" }, "showPoints": "never", "spanNulls": false, "stacking": { "group": "A", "mode": "none" }, "thresholdsStyle": { "mode": "off" } }, "mappings": [], "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }, "unit": "s" } }, "gridPos": { "h": 5, "w": 12, "x": 12, "y": 22 }, "id": 24, "options": { "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } }, "targets": [ { "expr": "histogram_quantile(0.95, sum(rate(mcp_tool_call_latency_seconds_bucket[5m])) by (le))", "legendFormat": "Tool Call P95", "refId": "A" }, { "expr": "histogram_quantile(0.95, sum(rate(mcp_list_tools_latency_seconds_bucket[5m])) by (le))", "legendFormat": "List Tools P95", "refId": "B" } ], "title": "MCP Latency", "type": "timeseries" },
+    { "gridPos": { "h": 1, "w": 24, "x": 0, "y": 27 }, "id": 30, "title": "System Resources", "type": "row" },
+    { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "axisBorderShow": false, "axisCenteredZero": false, "axisColorMode": "text", "axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line", "fillOpacity": 20, "gradientMode": "none", "hideFrom": { "legend": false, "tooltip": false, "viz": false }, "lineInterpolation": "smooth", "lineWidth": 2, "pointSize": 5, "scaleDistribution": { "type": "linear" }, "showPoints": "never", "spanNulls": false, "stacking": { "group": "A", "mode": "none" }, "thresholdsStyle": { "mode": "off" } }, "mappings": [], "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }, "unit": "bytes" } }, "gridPos": { "h": 6, "w": 12, "x": 0, "y": 28 }, "id": 31, "options": { "legend": { "calcs": ["lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } }, "targets": [ { "expr": "process_resident_memory_bytes", "legendFormat": "RSS Memory", "refId": "A" }, { "expr": "process_virtual_memory_bytes", "legendFormat": "Virtual Memory", "refId": "B" } ], "title": "Memory Usage", "type": "timeseries" },
+    { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "axisBorderShow": false, "axisCenteredZero": false, "axisColorMode": "text", "axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line", "fillOpacity": 20, "gradientMode": "none", "hideFrom": { "legend": false, "tooltip": false, "viz": false }, "lineInterpolation": "smooth", "lineWidth": 2, "pointSize": 5, "scaleDistribution": { "type": "linear" }, "showPoints": "never", "spanNulls": false, "stacking": { "group": "A", "mode": "none" }, "thresholdsStyle": { "mode": "off" } }, "mappings": [], "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }, "unit": "short" } }, "gridPos": { "h": 6, "w": 12, "x": 12, "y": 28 }, "id": 32, "options": { "legend": { "calcs": ["lastNotNull"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } }, "targets": [ { "expr": "rate(process_cpu_seconds_total[5m])", "legendFormat": "CPU Usage", "refId": "A" } ], "title": "CPU Usage", "type": "timeseries" },
+    { "gridPos": { "h": 1, "w": 24, "x": 0, "y": 34 }, "id": 40, "title": "Embedding Pipeline", "type": "row" },
+    { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "decimals": 1, "mappings": [], "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 0.1 }] }, "unit": "short" } }, "gridPos": { "h": 6, "w": 6, "x": 0, "y": 35 }, "id": 41, "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" }, "targets": [{ "expr": "sum(rate(sophosic_embedding_tasks_total{status=\"completed\"}[5m])) * 60 or on() vector(0)", "refId": "A" }], "title": "Embedding Tasks/min", "type": "stat" },
+    { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "mappings": [], "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 2 }, { "color": "red", "value": 5 }] }, "unit": "s" } }, "gridPos": { "h": 6, "w": 6, "x": 6, "y": 35 }, "id": 42, "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" }, "targets": [{ "expr": "histogram_quantile(0.95, sum by (le) (rate(sophosic_embedding_task_duration_seconds_bucket[5m]))) or on() vector(0)", "refId": "A" }], "title": "Embedding Latency P95", "type": "stat" },
+    { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "mappings": [], "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 1 }, { "color": "red", "value": 5 }] }, "unit": "short" } }, "gridPos": { "h": 6, "w": 6, "x": 12, "y": 35 }, "id": 43, "options": { "colorMode": "background", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" }, "targets": [{ "expr": "sum(increase(sophosic_embedding_tasks_total{status=\"failed\"}[24h])) or on() vector(0)", "refId": "A" }], "title": "Task Failures (24h)", "type": "stat" },
+    { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "mappings": [], "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "yellow", "value": 50 }, { "color": "green", "value": 80 }] }, "unit": "percent" } }, "gridPos": { "h": 6, "w": 6, "x": 18, "y": 35 }, "id": 44, "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" }, "targets": [{ "expr": "sum(rate(sophosic_embedding_cache_operations_total{operation=\"hit\"}[5m])) / (sum(rate(sophosic_embedding_cache_operations_total{operation=~\"hit|miss\"}[5m])) > 0) * 100 or on() vector(0)", "refId": "A" }], "title": "Cache Hit Rate", "type": "stat" },
+    { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "axisBorderShow": false, "axisCenteredZero": false, "axisColorMode": "text", "axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line", "fillOpacity": 15, "gradientMode": "none", "hideFrom": { "legend": false, "tooltip": false, "viz": false }, "lineInterpolation": "smooth", "lineWidth": 2, "pointSize": 5, "scaleDistribution": { "type": "linear" }, "showPoints": "never", "spanNulls": false, "stacking": { "group": "A", "mode": "none" }, "thresholdsStyle": { "mode": "off" } }, "mappings": [], "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }, "unit": "short" }, "overrides": [ { "matcher": { "id": "byName", "options": "Completed" }, "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }] }, { "matcher": { "id": "byName", "options": "Failed" }, "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }] }, { "matcher": { "id": "byName", "options": "Skipped" }, "properties": [{ "id": "color", "value": { "fixedColor": "yellow", "mode": "fixed" } }] } ] }, "gridPos": { "h": 8, "w": 12, "x": 0, "y": 41 }, "id": 45, "options": { "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } }, "targets": [ { "expr": "sum(rate(sophosic_embedding_tasks_total{status=\"completed\"}[5m])) * 60 or on() vector(0)", "legendFormat": "Completed", "refId": "A" }, { "expr": "sum(rate(sophosic_embedding_tasks_total{status=\"failed\"}[5m])) * 60 or on() vector(0)", "legendFormat": "Failed", "refId": "B" }, { "expr": "sum(rate(sophosic_embedding_tasks_total{status=\"skipped\"}[5m])) * 60 or on() vector(0)", "legendFormat": "Skipped", "refId": "C" } ], "title": "Embedding Task Throughput", "type": "timeseries" },
+    { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "axisBorderShow": false, "axisCenteredZero": false, "axisColorMode": "text", "axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line", "fillOpacity": 20, "gradientMode": "none", "hideFrom": { "legend": false, "tooltip": false, "viz": false }, "lineInterpolation": "smooth", "lineWidth": 2, "pointSize": 5, "scaleDistribution": { "type": "linear" }, "showPoints": "never", "spanNulls": false, "stacking": { "group": "A", "mode": "none" }, "thresholdsStyle": { "mode": "off" } }, "mappings": [], "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }, "unit": "s" }, "overrides": [ { "matcher": { "id": "byName", "options": "P50" }, "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }] }, { "matcher": { "id": "byName", "options": "P95" }, "properties": [{ "id": "color", "value": { "fixedColor": "yellow", "mode": "fixed" } }] }, { "matcher": { "id": "byName", "options": "P99" }, "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }] } ] }, "gridPos": { "h": 8, "w": 12, "x": 12, "y": 41 }, "id": 46, "options": { "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } }, "targets": [ { "expr": "histogram_quantile(0.50, sum by (le) (rate(sophosic_embedding_task_duration_seconds_bucket[5m])))", "legendFormat": "P50", "refId": "A" }, { "expr": "histogram_quantile(0.95, sum by (le) (rate(sophosic_embedding_task_duration_seconds_bucket[5m])))", "legendFormat": "P95", "refId": "B" }, { "expr": "histogram_quantile(0.99, sum by (le) (rate(sophosic_embedding_task_duration_seconds_bucket[5m])))", "legendFormat": "P99", "refId": "C" } ], "title": "Embedding Latency Percentiles", "type": "timeseries" },
+    { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "mappings": [], "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }, "unit": "short" } }, "gridPos": { "h": 6, "w": 6, "x": 0, "y": 49 }, "id": 47, "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" }, "targets": [{ "expr": "sum(increase(sophosic_embedding_discovery_sessions_total{action=\"discovered\"}[1h])) or on() vector(0)", "refId": "A" }], "title": "Stale Sessions Discovered", "type": "stat" },
+    { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "mappings": [], "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }, "unit": "short" } }, "gridPos": { "h": 6, "w": 6, "x": 6, "y": 49 }, "id": 48, "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" }, "targets": [{ "expr": "sum(increase(sophosic_embedding_discovery_sessions_total{action=\"enqueued\"}[1h])) or on() vector(0)", "refId": "A" }], "title": "Stale Sessions Enqueued", "type": "stat" },
+    { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "mappings": [], "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }, "unit": "short" } }, "gridPos": { "h": 6, "w": 6, "x": 12, "y": 49 }, "id": 49, "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" }, "targets": [{ "expr": "sum(increase(sophosic_embedding_chunks_total[24h])) or on() vector(0)", "refId": "A" }], "title": "Chunks Embedded (24h)", "type": "stat" },
+    { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "mappings": [], "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }, "unit": "short" } }, "gridPos": { "h": 6, "w": 6, "x": 18, "y": 49 }, "id": 50, "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" }, "targets": [{ "expr": "sum(increase(sophosic_embedding_messages_total[24h])) or on() vector(0)", "refId": "A" }], "title": "Messages Embedded (24h)", "type": "stat" },
+    { "gridPos": { "h": 1, "w": 24, "x": 0, "y": 55 }, "id": 60, "title": "Database Performance", "type": "row" },
+    { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "mappings": [], "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 0.1 }, { "color": "red", "value": 0.5 }] }, "unit": "s" } }, "gridPos": { "h": 6, "w": 6, "x": 0, "y": 56 }, "id": 61, "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" }, "targets": [{ "expr": "histogram_quantile(0.95, sum by (le) (rate(sophosic_db_query_duration_seconds_bucket[5m]))) or on() vector(0)", "refId": "A" }], "title": "Query Latency P95", "type": "stat" },
+    { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "mappings": [], "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }, "unit": "ops" } }, "gridPos": { "h": 6, "w": 6, "x": 6, "y": 56 }, "id": 62, "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" }, "targets": [{ "expr": "sum(rate(sophosic_db_queries_total[5m])) or on() vector(0)", "refId": "A" }], "title": "Queries/sec", "type": "stat" },
+    { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "mappings": [], "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 1 }] }, "unit": "short" } }, "gridPos": { "h": 6, "w": 6, "x": 12, "y": 56 }, "id": 63, "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" }, "targets": [{ "expr": "sum(increase(sophosic_db_slow_queries_total[1h])) or on() vector(0)", "refId": "A" }], "title": "Slow Queries (1h)", "type": "stat" },
+    { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "mappings": [], "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 0.01 }, { "color": "red", "value": 0.05 }] }, "unit": "percentunit" } }, "gridPos": { "h": 6, "w": 6, "x": 18, "y": 56 }, "id": 64, "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" }, "targets": [{ "expr": "(sum(rate(sophosic_db_queries_total{status=\"error\"}[5m])) or on() vector(0)) / (sum(rate(sophosic_db_queries_total[5m])) > 0 or on() vector(1))", "refId": "A" }], "title": "DB Error Rate", "type": "stat" },
+    { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "axisBorderShow": false, "axisCenteredZero": false, "axisColorMode": "text", "axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line", "fillOpacity": 20, "gradientMode": "none", "hideFrom": { "legend": false, "tooltip": false, "viz": false }, "lineInterpolation": "smooth", "lineWidth": 2, "pointSize": 5, "scaleDistribution": { "type": "linear" }, "showPoints": "never", "spanNulls": false, "stacking": { "group": "A", "mode": "none" }, "thresholdsStyle": { "mode": "off" } }, "mappings": [], "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }, "unit": "ops" } }, "gridPos": { "h": 8, "w": 12, "x": 0, "y": 62 }, "id": 65, "options": { "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } }, "targets": [ { "expr": "sum(rate(sophosic_db_queries_total[5m])) by (operation)", "legendFormat": "{{operation}}", "refId": "A" } ], "title": "Query Rate by Operation", "type": "timeseries" },
+    { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "axisBorderShow": false, "axisCenteredZero": false, "axisColorMode": "text", "axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line", "fillOpacity": 20, "gradientMode": "none", "hideFrom": { "legend": false, "tooltip": false, "viz": false }, "lineInterpolation": "smooth", "lineWidth": 2, "pointSize": 5, "scaleDistribution": { "type": "linear" }, "showPoints": "never", "spanNulls": false, "stacking": { "group": "A", "mode": "none" }, "thresholdsStyle": { "mode": "off" } }, "mappings": [], "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }, "unit": "s" } }, "gridPos": { "h": 8, "w": 12, "x": 12, "y": 62 }, "id": 66, "options": { "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } }, "targets": [ { "expr": "histogram_quantile(0.50, sum by (le) (rate(sophosic_db_query_duration_seconds_bucket[5m])))", "legendFormat": "P50", "refId": "A" }, { "expr": "histogram_quantile(0.95, sum by (le) (rate(sophosic_db_query_duration_seconds_bucket[5m])))", "legendFormat": "P95", "refId": "B" }, { "expr": "histogram_quantile(0.99, sum by (le) (rate(sophosic_db_query_duration_seconds_bucket[5m])))", "legendFormat": "P99", "refId": "C" } ], "title": "Query Latency Percentiles", "type": "timeseries" },
+    { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "axisBorderShow": false, "axisCenteredZero": false, "axisColorMode": "text", "axisLabel": "", "axisPlacement": "auto", "fillOpacity": 80, "gradientMode": "none", "hideFrom": { "legend": false, "tooltip": false, "viz": false }, "lineWidth": 1, "scaleDistribution": { "type": "linear" }, "thresholdsStyle": { "mode": "off" } }, "mappings": [], "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }, "unit": "short" }, "overrides": [ { "matcher": { "id": "byName", "options": "active" }, "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }] }, { "matcher": { "id": "byName", "options": "idle" }, "properties": [{ "id": "color", "value": { "fixedColor": "blue", "mode": "fixed" } }] } ] }, "gridPos": { "h": 8, "w": 12, "x": 0, "y": 70 }, "id": 67, "options": { "barRadius": 0, "barWidth": 0.9, "groupWidth": 0.7, "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": true }, "orientation": "auto", "showValue": "auto", "stacking": "none", "tooltip": { "mode": "single", "sort": "none" }, "xTickLabelRotation": 0 }, "targets": [ { "expr": "sophosic_db_connection_pool_size", "legendFormat": "{{state}}", "refId": "A" } ], "title": "Connection Pool", "type": "barchart" },
+    { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "axisBorderShow": false, "axisCenteredZero": false, "axisColorMode": "text", "axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line", "fillOpacity": 20, "gradientMode": "none", "hideFrom": { "legend": false, "tooltip": false, "viz": false }, "lineInterpolation": "smooth", "lineWidth": 2, "pointSize": 5, "scaleDistribution": { "type": "linear" }, "showPoints": "never", "spanNulls": false, "stacking": { "group": "A", "mode": "none" }, "thresholdsStyle": { "mode": "off" } }, "mappings": [], "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }, "unit": "ops" } }, "gridPos": { "h": 8, "w": 12, "x": 12, "y": 70 }, "id": 68, "options": { "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } }, "targets": [ { "expr": "sum(rate(sophosic_db_transactions_total{status=\"committed\"}[5m])) or on() vector(0)", "legendFormat": "Committed", "refId": "A" }, { "expr": "sum(rate(sophosic_db_transactions_total{status=\"rolled_back\"}[5m])) or on() vector(0)", "legendFormat": "Rolled Back", "refId": "B" } ], "title": "Transaction Rate", "type": "timeseries" },
+    { "gridPos": { "h": 1, "w": 24, "x": 0, "y": 78 }, "id": 70, "title": "Redis Cache", "type": "row" },
+    { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "mappings": [], "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "yellow", "value": 50 }, { "color": "green", "value": 80 }] }, "unit": "percent" } }, "gridPos": { "h": 6, "w": 6, "x": 0, "y": 79 }, "id": 71, "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" }, "targets": [{ "expr": "sophosic_redis_cache_hit_rate * 100 or on() vector(0)", "refId": "A" }], "title": "Cache Hit Rate", "type": "stat" },
+    { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "mappings": [], "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }, "unit": "ops" } }, "gridPos": { "h": 6, "w": 6, "x": 6, "y": 79 }, "id": 72, "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" }, "targets": [{ "expr": "sum(rate(sophosic_redis_operations_total[5m])) or on() vector(0)", "refId": "A" }], "title": "Operations/sec", "type": "stat" },
+    { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "mappings": [], "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }, "unit": "short" } }, "gridPos": { "h": 6, "w": 6, "x": 12, "y": 79 }, "id": 73, "options": { "colorMode": "value", "graphMode": "none", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" }, "targets": [{ "expr": "sophosic_redis_connections_active or on() vector(0)", "refId": "A" }], "title": "Active Connections", "type": "stat" },
+    { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "mappings": [], "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 1 }] }, "unit": "short" } }, "gridPos": { "h": 6, "w": 6, "x": 18, "y": 79 }, "id": 74, "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" }, "targets": [{ "expr": "sum(increase(sophosic_redis_errors_total[1h])) or on() vector(0)", "refId": "A" }], "title": "Errors (1h)", "type": "stat" },
+    { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "axisBorderShow": false, "axisCenteredZero": false, "axisColorMode": "text", "axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line", "fillOpacity": 20, "gradientMode": "none", "hideFrom": { "legend": false, "tooltip": false, "viz": false }, "lineInterpolation": "smooth", "lineWidth": 2, "pointSize": 5, "scaleDistribution": { "type": "linear" }, "showPoints": "never", "spanNulls": false, "stacking": { "group": "A", "mode": "none" }, "thresholdsStyle": { "mode": "off" } }, "mappings": [], "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }, "unit": "ops" } }, "gridPos": { "h": 8, "w": 12, "x": 0, "y": 85 }, "id": 75, "options": { "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } }, "targets": [ { "expr": "sum(rate(sophosic_redis_cache_results_total{result=\"hit\"}[5m])) or on() vector(0)", "legendFormat": "Hits", "refId": "A" }, { "expr": "sum(rate(sophosic_redis_cache_results_total{result=\"miss\"}[5m])) or on() vector(0)", "legendFormat": "Misses", "refId": "B" } ], "title": "Cache Hits vs Misses", "type": "timeseries" },
+    { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "axisBorderShow": false, "axisCenteredZero": false, "axisColorMode": "text", "axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line", "fillOpacity": 20, "gradientMode": "none", "hideFrom": { "legend": false, "tooltip": false, "viz": false }, "lineInterpolation": "smooth", "lineWidth": 2, "pointSize": 5, "scaleDistribution": { "type": "linear" }, "showPoints": "never", "spanNulls": false, "stacking": { "group": "A", "mode": "none" }, "thresholdsStyle": { "mode": "off" } }, "mappings": [], "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }, "unit": "s" } }, "gridPos": { "h": 8, "w": 12, "x": 12, "y": 85 }, "id": 76, "options": { "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } }, "targets": [ { "expr": "histogram_quantile(0.50, sum by (le) (rate(sophosic_redis_operation_duration_seconds_bucket[5m])))", "legendFormat": "P50", "refId": "A" }, { "expr": "histogram_quantile(0.95, sum by (le) (rate(sophosic_redis_operation_duration_seconds_bucket[5m])))", "legendFormat": "P95", "refId": "B" }, { "expr": "histogram_quantile(0.99, sum by (le) (rate(sophosic_redis_operation_duration_seconds_bucket[5m])))", "legendFormat": "P99", "refId": "C" } ], "title": "Redis Operation Latency", "type": "timeseries" },
+    { "gridPos": { "h": 1, "w": 24, "x": 0, "y": 93 }, "id": 80, "title": "External API Integrations", "type": "row" },
+    { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "mappings": [], "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }, "unit": "ops" } }, "gridPos": { "h": 6, "w": 6, "x": 0, "y": 94 }, "id": 81, "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" }, "targets": [{ "expr": "sum(rate(sophosic_external_api_requests_total[5m])) or on() vector(0)", "refId": "A" }], "title": "External API Requests/sec", "type": "stat" },
+    { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "mappings": [], "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 1 }, { "color": "red", "value": 5 }] }, "unit": "s" } }, "gridPos": { "h": 6, "w": 6, "x": 6, "y": 94 }, "id": 82, "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" }, "targets": [{ "expr": "histogram_quantile(0.95, sum by (le) (rate(sophosic_external_api_request_duration_seconds_bucket[5m]))) or on() vector(0)", "refId": "A" }], "title": "External API P95 Latency", "type": "stat" },
+    { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "mappings": [], "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }, "unit": "short" } }, "gridPos": { "h": 6, "w": 6, "x": 12, "y": 94 }, "id": 83, "options": { "colorMode": "value", "graphMode": "none", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" }, "targets": [{ "expr": "sum(sophosic_external_api_requests_in_progress) or on() vector(0)", "refId": "A" }], "title": "In-Progress API Calls", "type": "stat" },
+    { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "mappings": [], "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 0.01 }, { "color": "red", "value": 0.05 }] }, "unit": "percentunit" } }, "gridPos": { "h": 6, "w": 6, "x": 18, "y": 94 }, "id": 84, "options": { "colorMode": "value", "graphMode": "area", "justifyMode": "auto", "orientation": "auto", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" }, "targets": [{ "expr": "(sum(rate(sophosic_external_api_errors_total[5m])) or on() vector(0)) / (sum(rate(sophosic_external_api_requests_total[5m])) > 0 or on() vector(1))", "refId": "A" }], "title": "External API Error Rate", "type": "stat" },
+    { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "axisBorderShow": false, "axisCenteredZero": false, "axisColorMode": "text", "axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line", "fillOpacity": 20, "gradientMode": "none", "hideFrom": { "legend": false, "tooltip": false, "viz": false }, "lineInterpolation": "smooth", "lineWidth": 2, "pointSize": 5, "scaleDistribution": { "type": "linear" }, "showPoints": "never", "spanNulls": false, "stacking": { "group": "A", "mode": "none" }, "thresholdsStyle": { "mode": "off" } }, "mappings": [], "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }, "unit": "ops" } }, "gridPos": { "h": 8, "w": 12, "x": 0, "y": 100 }, "id": 85, "options": { "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } }, "targets": [ { "expr": "sum(rate(sophosic_external_api_requests_total[5m])) by (provider)", "legendFormat": "{{provider}}", "refId": "A" } ], "title": "Request Rate by Provider", "type": "timeseries" },
+    { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "axisBorderShow": false, "axisCenteredZero": false, "axisColorMode": "text", "axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line", "fillOpacity": 20, "gradientMode": "none", "hideFrom": { "legend": false, "tooltip": false, "viz": false }, "lineInterpolation": "smooth", "lineWidth": 2, "pointSize": 5, "scaleDistribution": { "type": "linear" }, "showPoints": "never", "spanNulls": false, "stacking": { "group": "A", "mode": "none" }, "thresholdsStyle": { "mode": "off" } }, "mappings": [], "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }, "unit": "short" } }, "gridPos": { "h": 8, "w": 12, "x": 12, "y": 100 }, "id": 86, "options": { "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } }, "targets": [ { "expr": "sum(rate(sophosic_external_api_tokens_total{direction=\"input\"}[5m])) by (provider) * 60", "legendFormat": "{{provider}} input", "refId": "A" }, { "expr": "sum(rate(sophosic_external_api_tokens_total{direction=\"output\"}[5m])) by (provider) * 60", "legendFormat": "{{provider}} output", "refId": "B" } ], "title": "Token Usage by Provider (tokens/min)", "type": "timeseries" },
+    { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "axisBorderShow": false, "axisCenteredZero": false, "axisColorMode": "text", "axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line", "fillOpacity": 20, "gradientMode": "none", "hideFrom": { "legend": false, "tooltip": false, "viz": false }, "lineInterpolation": "smooth", "lineWidth": 2, "pointSize": 5, "scaleDistribution": { "type": "linear" }, "showPoints": "never", "spanNulls": false, "stacking": { "group": "A", "mode": "normal" }, "thresholdsStyle": { "mode": "off" } }, "mappings": [], "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }, "unit": "currencyUSD" } }, "gridPos": { "h": 8, "w": 12, "x": 0, "y": 108 }, "id": 87, "options": { "legend": { "calcs": ["sum"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } }, "targets": [ { "expr": "sum(increase(sophosic_external_api_cost_dollars_total[1h])) by (provider)", "legendFormat": "{{provider}}", "refId": "A" } ], "title": "API Cost by Provider ($/hr)", "type": "timeseries" },
+    { "datasource": { "type": "prometheus", "uid": "PBFA97CFB590B2093" }, "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" }, "custom": { "axisBorderShow": false, "axisCenteredZero": false, "axisColorMode": "text", "axisLabel": "", "axisPlacement": "auto", "barAlignment": 0, "drawStyle": "line", "fillOpacity": 20, "gradientMode": "none", "hideFrom": { "legend": false, "tooltip": false, "viz": false }, "lineInterpolation": "smooth", "lineWidth": 2, "pointSize": 5, "scaleDistribution": { "type": "linear" }, "showPoints": "never", "spanNulls": false, "stacking": { "group": "A", "mode": "none" }, "thresholdsStyle": { "mode": "off" } }, "mappings": [], "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }, "unit": "short" } }, "gridPos": { "h": 8, "w": 12, "x": 12, "y": 108 }, "id": 88, "options": { "legend": { "calcs": ["sum"], "displayMode": "table", "placement": "bottom", "showLegend": true }, "tooltip": { "mode": "multi", "sort": "desc" } }, "targets": [ { "expr": "sum(rate(sophosic_external_api_retries_total[5m])) by (provider) * 60", "legendFormat": "{{provider}}", "refId": "A" } ], "title": "Retries by Provider (per min)", "type": "timeseries" }
   ],
   "refresh": "30s",
   "schemaVersion": 39,
