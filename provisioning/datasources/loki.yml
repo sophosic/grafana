@@ -4,6 +4,7 @@ apiVersion: 1
 
 datasources:
   - name: Loki
+    uid: sophosic-loki
     type: loki
     access: proxy
     # Internal hostname on Render's private network (same region: ohio)
