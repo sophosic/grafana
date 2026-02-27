@@ -3,8 +3,9 @@
 #
 # To activate notifications, set ALERT_WEBHOOK_URL on the Grafana service
 # in Render (e.g., a Slack Incoming Webhook or Discord webhook URL).
-# Without this env var, alerts still fire and appear in the Grafana UI
-# but no external notifications are sent.
+# Without this env var, Grafana uses a no-op placeholder so the service
+# can start. Alerts still fire and appear in the Grafana UI but no
+# external notifications are sent until a real webhook URL is configured.
 apiVersion: 1
 
 contactPoints:
@@ -15,5 +16,5 @@ contactPoints:
         type: webhook
         disableResolveMessage: false
         settings:
-          url: ${ALERT_WEBHOOK_URL}
+          url: ${ALERT_WEBHOOK_URL:-https://localhost/alerting-not-configured}
           httpMethod: POST
