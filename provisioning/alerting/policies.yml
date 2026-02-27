@@ -1,0 +1,22 @@
+# Grafana Notification Policies — Auto-provisioned
+# Routes all alerts to the sophosic-webhook contact point.
+# Critical alerts are grouped tighter (30s wait) for faster response.
+apiVersion: 1
+
+policies:
+  - orgId: 1
+    receiver: sophosic-webhook
+    group_by:
+      - alertname
+      - severity
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 4h
+    routes:
+      # Critical alerts: shorter repeat interval for urgency
+      - receiver: sophosic-webhook
+        object_matchers:
+          - ['severity', '=', 'critical']
+        group_wait: 10s
+        group_interval: 2m
+        repeat_interval: 1h

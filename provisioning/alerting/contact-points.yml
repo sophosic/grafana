@@ -1,0 +1,19 @@
+# Grafana Contact Points — Auto-provisioned
+# Webhook-based contact point for alert notifications.
+#
+# To activate notifications, set ALERT_WEBHOOK_URL on the Grafana service
+# in Render (e.g., a Slack Incoming Webhook or Discord webhook URL).
+# Without this env var, alerts still fire and appear in the Grafana UI
+# but no external notifications are sent.
+apiVersion: 1
+
+contactPoints:
+  - orgId: 1
+    name: sophosic-webhook
+    receivers:
+      - uid: webhook-primary
+        type: webhook
+        disableResolveMessage: false
+        settings:
+          url: ${ALERT_WEBHOOK_URL}
+          httpMethod: POST

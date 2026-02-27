@@ -1,0 +1,410 @@
+# Grafana Alerting Rules — Auto-provisioned
+# Uses PromQL against sophosic_* metrics scraped by Prometheus.
+#
+# Severity levels:
+#   critical — requires immediate attention (service down, high error rate)
+#   warning  — investigate soon (resource pressure, degraded performance)
+#   info     — awareness only (unusual patterns, thresholds approaching)
+apiVersion: 1
+
+groups:
+  - orgId: 1
+    name: Service Health
+    folder: Sophosic Alerts
+    interval: 1m
+    rules:
+      # ── API Error Rate ────────────────────────────────────────────
+      # Fires when >5% of HTTP requests return 5xx over 5 minutes.
+      # This is the single most important alert — it means users are
+      # seeing errors.
+      - uid: alert-high-error-rate
+        title: High API Error Rate
+        condition: C
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "API 5xx error rate exceeds 5%"
+          description: "{{ $values.C.Value }}% of requests are returning server errors."
+        noDataState: OK
+        execErrState: Alerting
+        data:
+          # A: total 5xx requests/sec
+          - refId: A
+            datasourceUid: sophosic-prometheus
+            relativeTimeRange:
+              from: 300
+              to: 0
+            model:
+              expr: sum(rate(sophosic_http_requests_total{status_code=~"5.."}[5m]))
+              refId: A
+              intervalMs: 15000
+              maxDataPoints: 43200
+          # B: total requests/sec
+          - refId: B
+            datasourceUid: sophosic-prometheus
+            relativeTimeRange:
+              from: 300
+              to: 0
+            model:
+              expr: sum(rate(sophosic_http_requests_total[5m]))
+              refId: B
+              intervalMs: 15000
+              maxDataPoints: 43200
+          # C: error percentage — threshold > 5
+          - refId: C
+            datasourceUid: '__expr__'
+            model:
+              type: math
+              expression: "($A / $B) * 100"
+              refId: C
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [5]
+                  operator:
+                    type: and
+                  reducer:
+                    type: last
+
+      # ── High API Latency (p95) ────────────────────────────────────
+      # Fires when p95 latency exceeds 2 seconds over 5 minutes.
+      - uid: alert-high-latency-p95
+        title: High API Latency (p95)
+        condition: B
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "API p95 latency exceeds 2s"
+          description: "p95 request duration is {{ $values.A.Value }}s."
+        noDataState: OK
+        execErrState: Alerting
+        data:
+          - refId: A
+            datasourceUid: sophosic-prometheus
+            relativeTimeRange:
+              from: 300
+              to: 0
+            model:
+              expr: histogram_quantile(0.95, sum(rate(sophosic_http_request_duration_seconds_bucket[5m])) by (le))
+              refId: A
+              intervalMs: 15000
+              maxDataPoints: 43200
+          - refId: B
+            datasourceUid: '__expr__'
+            model:
+              type: threshold
+              expression: A
+              refId: B
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [2]
+
+      # ── Service Down ──────────────────────────────────────────────
+      # Fires when Prometheus can't scrape the backend at all.
+      - uid: alert-service-down
+        title: Backend Service Down
+        condition: B
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "sophosic-api is unreachable"
+          description: "Prometheus cannot scrape the backend /metrics endpoint."
+        noDataState: Alerting
+        execErrState: Alerting
+        data:
+          - refId: A
+            datasourceUid: sophosic-prometheus
+            relativeTimeRange:
+              from: 300
+              to: 0
+            model:
+              expr: up{job="sophosic-api"}
+              refId: A
+              intervalMs: 15000
+              maxDataPoints: 43200
+          - refId: B
+            datasourceUid: '__expr__'
+            model:
+              type: threshold
+              expression: A
+              refId: B
+              conditions:
+                - evaluator:
+                    type: lt
+                    params: [1]
+
+  - orgId: 1
+    name: Resource Pressure
+    folder: Sophosic Alerts
+    interval: 1m
+    rules:
+      # ── High Memory Usage ─────────────────────────────────────────
+      # Fires when resident memory exceeds 450MB (Render starter = 512MB).
+      - uid: alert-high-memory
+        title: High Memory Usage
+        condition: B
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Backend memory usage exceeds 450MB"
+          description: "Resident memory is {{ $values.A.Value }} bytes."
+        noDataState: OK
+        execErrState: Alerting
+        data:
+          - refId: A
+            datasourceUid: sophosic-prometheus
+            relativeTimeRange:
+              from: 300
+              to: 0
+            model:
+              expr: process_resident_memory_bytes{job="sophosic-api"}
+              refId: A
+              intervalMs: 15000
+              maxDataPoints: 43200
+          - refId: B
+            datasourceUid: '__expr__'
+            model:
+              type: threshold
+              expression: A
+              refId: B
+              conditions:
+                - evaluator:
+                    type: gt
+                    # 450MB in bytes
+                    params: [471859200]
+
+      # ── DB Connection Pool Exhaustion ─────────────────────────────
+      # Fires when active DB connections exceed 80% of pool capacity.
+      # Uses the active gauge vs total gauge from sophosic_db metrics.
+      - uid: alert-db-pool-exhaustion
+        title: DB Connection Pool Near Capacity
+        condition: C
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Database connection pool >80% utilization"
+          description: "Pool utilization is {{ $values.C.Value }}%."
+        noDataState: OK
+        execErrState: Alerting
+        data:
+          - refId: A
+            datasourceUid: sophosic-prometheus
+            relativeTimeRange:
+              from: 300
+              to: 0
+            model:
+              expr: sophosic_db_connection_pool_size{state="active"}
+              refId: A
+              intervalMs: 15000
+              maxDataPoints: 43200
+          - refId: B
+            datasourceUid: sophosic-prometheus
+            relativeTimeRange:
+              from: 300
+              to: 0
+            model:
+              expr: sophosic_db_connection_pool_size{state="total"}
+              refId: B
+              intervalMs: 15000
+              maxDataPoints: 43200
+          - refId: C
+            datasourceUid: '__expr__'
+            model:
+              type: math
+              expression: "($A / $B) * 100"
+              refId: C
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [80]
+
+      # ── Redis Errors Spike ────────────────────────────────────────
+      # Fires when Redis error rate exceeds 5 errors/min over 3 minutes.
+      - uid: alert-redis-errors
+        title: Redis Error Spike
+        condition: B
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis errors exceeding 5/min"
+          description: "Redis error rate is {{ $values.A.Value }}/s."
+        noDataState: OK
+        execErrState: Alerting
+        data:
+          - refId: A
+            datasourceUid: sophosic-prometheus
+            relativeTimeRange:
+              from: 300
+              to: 0
+            model:
+              expr: sum(rate(sophosic_redis_errors_total[3m])) * 60
+              refId: A
+              intervalMs: 15000
+              maxDataPoints: 43200
+          - refId: B
+            datasourceUid: '__expr__'
+            model:
+              type: threshold
+              expression: A
+              refId: B
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [5]
+
+  - orgId: 1
+    name: AI & Streaming
+    folder: Sophosic Alerts
+    interval: 1m
+    rules:
+      # ── Streaming Failures ────────────────────────────────────────
+      # Fires when streaming error events exceed 3/min (SSE to clients).
+      - uid: alert-streaming-failures
+        title: High Streaming Failure Rate
+        condition: B
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "SSE streaming errors exceed 3/min"
+          description: "Streaming error rate is {{ $values.A.Value }}/min."
+        noDataState: OK
+        execErrState: Alerting
+        data:
+          - refId: A
+            datasourceUid: sophosic-prometheus
+            relativeTimeRange:
+              from: 300
+              to: 0
+            model:
+              expr: sum(rate(sophosic_streaming_events_total{event="error"}[3m])) * 60
+              refId: A
+              intervalMs: 15000
+              maxDataPoints: 43200
+          - refId: B
+            datasourceUid: '__expr__'
+            model:
+              type: threshold
+              expression: A
+              refId: B
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [3]
+
+      # ── External API Failures (OpenAI/Anthropic) ──────────────────
+      # Fires when LLM provider errors exceed 10/min — affects Sophia chat.
+      - uid: alert-llm-api-failures
+        title: LLM Provider API Failures
+        condition: B
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "External AI API errors exceed 10/min"
+          description: "{{ $values.A.Value }} errors/min from LLM providers."
+        noDataState: OK
+        execErrState: Alerting
+        data:
+          - refId: A
+            datasourceUid: sophosic-prometheus
+            relativeTimeRange:
+              from: 300
+              to: 0
+            model:
+              expr: sum(rate(sophosic_external_api_errors_total{provider=~"openai|anthropic"}[3m])) * 60
+              refId: A
+              intervalMs: 15000
+              maxDataPoints: 43200
+          - refId: B
+            datasourceUid: '__expr__'
+            model:
+              type: threshold
+              expression: A
+              refId: B
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [10]
+
+      # ── Slow Time to First Token ──────────────────────────────────
+      # Fires when median TTFT exceeds 5 seconds — users see a long spinner.
+      - uid: alert-slow-ttft
+        title: Slow Time to First Token
+        condition: B
+        for: 5m
+        labels:
+          severity: info
+        annotations:
+          summary: "Median TTFT exceeds 5 seconds"
+          description: "p50 time-to-first-token is {{ $values.A.Value }}s."
+        noDataState: OK
+        execErrState: OK
+        data:
+          - refId: A
+            datasourceUid: sophosic-prometheus
+            relativeTimeRange:
+              from: 300
+              to: 0
+            model:
+              expr: histogram_quantile(0.50, sum(rate(sophosic_streaming_ttft_seconds_bucket[5m])) by (le))
+              refId: A
+              intervalMs: 15000
+              maxDataPoints: 43200
+          - refId: B
+            datasourceUid: '__expr__'
+            model:
+              type: threshold
+              expression: A
+              refId: B
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [5]
+
+  - orgId: 1
+    name: Database & Slow Queries
+    folder: Sophosic Alerts
+    interval: 1m
+    rules:
+      # ── Slow DB Queries ───────────────────────────────────────────
+      # Fires when slow query rate exceeds 5/min (queries taking >1s).
+      - uid: alert-slow-queries
+        title: Elevated Slow Database Queries
+        condition: B
+        for: 5m
+        labels:
+          severity: info
+        annotations:
+          summary: "Slow DB queries exceed 5/min"
+          description: "{{ $values.A.Value }} slow queries/min detected."
+        noDataState: OK
+        execErrState: OK
+        data:
+          - refId: A
+            datasourceUid: sophosic-prometheus
+            relativeTimeRange:
+              from: 300
+              to: 0
+            model:
+              expr: sum(rate(sophosic_db_slow_queries_total[5m])) * 60
+              refId: A
+              intervalMs: 15000
+              maxDataPoints: 43200
+          - refId: B
+            datasourceUid: '__expr__'
+            model:
+              type: threshold
+              expression: A
+              refId: B
+              conditions:
+                - evaluator:
+                    type: gt
+                    params: [5]
