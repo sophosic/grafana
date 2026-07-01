@@ -7,7 +7,7 @@ datasources:
     uid: sophosic-prometheus
     type: prometheus
     access: proxy
-    # Internal hostname on Render's private network (same region: ohio)
+    # Must match apps/prometheus/render.yaml service name and same-region Render private network.
     url: http://sophosic-prometheus:9090
     isDefault: true
     editable: false
